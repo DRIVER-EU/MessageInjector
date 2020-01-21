@@ -1,0 +1,20 @@
+language: java
+jdk:
+- openjdk8
+dist: trusty
+
+env:
+  matrix:
+  - VERSION=2.0.0
+
+install: mvn install
+
+script: 
+  - docker build -t drivereu/message-inject:latest -t drivereu/message-inject:$VERSION .
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push drivereu/test-bed-admin
+
+cache:
+  directories:
+  - ".autoconf"
+  - "$HOME/.m2"
