@@ -1,0 +1,201 @@
+@import '../../node_modules/vuetify/src/stylus/main'
+@import '~vuetify-stylus-fixed-table-header';
+
+/** from vuetify-stylus-fixed-table-header, modified to work based on absolute positions **/
+
+@import '~vuetify/src/stylus/settings/_theme.styl'
+
+fixed-table-header-absolute() {
+  .v-table__overflow {
+    overflow-y: auto !important
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+  }
+
+  .theme--light th {
+    background-color: $material-light.cards
+  }
+  .theme--dark th {
+    background-color: $material-dark.cards
+  }
+
+  th {
+    position: sticky
+    top: 0
+    z-index: 1
+  }
+
+  tr.v-datatable__progress {
+    th {
+      top: 55px
+      height: 1px;
+    }
+  }
+}
+
+/** end of import */
+
+html {
+  overflow-y: auto
+}
+
+.title {
+  width: 300px;
+}
+
+.toolbar {
+}
+
+.project-logo {
+  height: 40px !important;
+  margin: 4px;
+}
+
+.diagramButton {
+}
+
+.diagramPopup, .attachmentPopup {
+  .diagramImage, .attachmentImage {
+    display: block;
+    margin: 0px auto;
+    max-width: 100%;
+    text-align: center;
+
+    &> img {
+      max-width: 100%;
+      text-align: center;
+    }
+  }
+
+  .btn {
+    color: #FDB836;
+  }
+}
+
+.tablePanel {
+  border-right: 1px solid #999999 !important;
+}
+
+.recordsTable {
+  fixed-table-header-absolute();
+}
+
+.recordsTable tr.selected {
+}
+
+.recordsTable tr.warnMsg td {
+  background-color: lighten(#ffeebb, 6);
+}
+
+.recordsTable tr.errorMsg td {
+  background-color: lighten(rgb(183, 28, 28), 50);
+}
+
+.recordsTable tr.selected td {
+  background-color: #0d47a1;
+  color: white;
+}
+
+.recordsTable td {
+  cursor: default;
+}
+
+.detailsPanel {
+  box-shadow: none;
+  height: 100%;
+
+  .jsonView {
+    white-space: normal !important;
+    font-size: 12px;
+  }
+
+  .jsonView > .spacing {
+    display: none;
+  }
+
+  ul.attachments {
+    list-style-type: none;
+    padding-left: 0px;
+  }
+}
+
+.timelinePanel {
+  border-top: 1px solid #999999 !important;
+
+  .includeLogs {
+    width: 400px;
+    text-align: right;
+    position: absolute;
+    right: 0px;
+    top: 10px;
+
+    &> div {
+      margin-top: 0px;
+    }
+  }
+
+  .vis-item.trial {
+    border-color: #ffbb33;
+    background-color: #ffeebb;
+  }
+
+  .vis-item.scenario {
+    border-color: lighten(#ffbb33, 10);
+    background-color: lighten(#ffeebb, 6);
+    cursor: pointer;
+  }
+
+  .vis-item.session {
+    border-color: lighten(#ffbb33, 15);
+    background-color: lighten(#ffeebb, 12);
+    cursor: pointer;
+  }
+
+  .vis-item.Alert {
+    background-color: #ffeedd;
+    border-color: #ffbb99;
+    cursor: pointer;
+  }
+
+  .vis-item.Log {
+    background-color: #d5ddf6;
+    border-color: #97b0f8;
+    cursor: pointer;
+  }
+
+  .vis-item.LargeDataUpdate {
+    background-color: #eeeeee;
+    border-color: #aaaaaa;
+    cursor: pointer;
+  }
+
+  .vis-item.GeoJSONEnvelope {
+    background-color: #ddffdd;
+    border-color: #99ff99;
+    cursor: pointer;
+  }
+
+  .vis-item.selected {
+    border-color: #0d47a1;
+    background-color: #0d47a1;
+    color: white;
+  }
+
+  /*
+  background-color: #ddffff;
+  border-color: #99ffff;
+
+  background-color: #d5ddf6;
+  border-color: #97b0f8;
+
+  background-color: #ffffdd;
+  border-color: #ffff99;
+
+  background-color: #ffddff;
+  border-color: #ff99ff;
+  */
+}
+
