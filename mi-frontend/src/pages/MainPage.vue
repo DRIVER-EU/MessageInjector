@@ -2,9 +2,14 @@
   <v-app>
     <toolbar>
       <v-menu offset-y content-class="dropdown-menu" transition="slide-y-transition">
-        <v-btn slot="activator">
-          <v-icon left>all_inbox</v-icon>
-          Reports
+        <v-btn :disabled="!isUploadPossible" class="toolbarButton" slot="activator" @click="openGeoJsonUploadPopup">
+          <v-badge overlap :color="!isUploadPossible ? 'rgba(0,0,0,0.26)' : 'rgba(0, 0, 0, 0.87)'">
+            <template v-slot:badge>
+              <span>{{numberOfPolygonsToUpload}}</span>
+            </template>
+            <v-icon left>cloud_upload</v-icon>
+          </v-badge>
+          Geometry Upload
         </v-btn>
       </v-menu>
     </toolbar>
@@ -13,10 +18,14 @@
         <div style="position:absolute;top:64px;bottom:0px;left:0px;right:0px;">
           <v-layout row wrap fill-height>
             <div ref="mainFrame" style="position:absolute;top:0px;bottom:0px;left:0px;right:400px;">
-              <map-panel />
+              <map-panel :on-draw-polygon="handlePolygon"
+                         :new-feature-geo-json="newFeatureGeoJson"
+                         :feature-geo-json-to-upload="featureGeoJsonToUpload"
+                         :uploaded-feature-geo-json="uploadedFeatureGeoJson"
+              />
             </div>
             <div ref="detailsFrame" style="position:absolute;top:0px;bottom:0px;right:0px;width:400px;">
-              <details-panel style="height: 100%; overflow: auto;" :onWidthChange="setDetailsWidth"/>
+              <add-polygon-panel style="height: 100%; overflow: auto;" :onWidthChange="setDetailsWidth"/>
             </div>
           </v-layout>
         </div>
@@ -28,11 +37,13 @@
         </v-btn>
       </v-snackbar>
     </main>
+    <geo-json-upload-popup/>
   </v-app>
 </template>
 <script>
   import {eventBus} from '../main';
   import EventName from '../constants/EventName';
+  import {store} from '../store'
 
   export default {
     name: 'MainPage',
@@ -42,15 +53,35 @@
         text: ""
       }
     }),
+    computed: {
+      numberOfPolygonsToUpload() {
+        return store.state.polygonGeoJsonToUpload.length;
+      },
+      newFeatureGeoJson() {
+        return store.state.newPolygonGeoJson;
+      },
+      featureGeoJsonToUpload() {
+        return store.state.polygonGeoJsonToUpload;
+      },
+      uploadedFeatureGeoJson() {
+        return store.state.uploadedPolygonGeoJson;
+      },
+      isUploadPossible() {
+        return store.state.polygonGeoJsonToUpload.length > 0 && !store.state.newPolygonGeoJson;
+      }
+    },
     methods: {
-      openUploadPopup () {
-        eventBus.$emit(EventName.UPLOAD_POPUP, true);
+      openGeoJsonUploadPopup () {
+        eventBus.$emit(EventName.GEO_JSON_POPUP, {open: true});
       },
       setDetailsWidth(width) {
         const mainFrame = this.$refs.mainFrame;
         const detailsFrame = this.$refs.detailsFrame;
         mainFrame.style.right = width + "px";
         detailsFrame.style.width = width + "px";
+      },
+      handlePolygon(geoJson) {
+        store.dispatch('setNewPolygonGeoJson', geoJson);
       }
     },
   };

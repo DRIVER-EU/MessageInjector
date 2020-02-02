@@ -14,6 +14,7 @@
     "axios": "^0.18.0",
     "file-saver": "^2.0.1",
     "json-tree-view": "^0.4.10",
+    "jsts": "^2.1.0",
     "lodash.uniqueid": "^4.0.1",
     "material-icons": "^0.1.0",
     "moment": "^2.21.0",

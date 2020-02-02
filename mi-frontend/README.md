@@ -1,5 +1,9 @@
 # message-inject
 
+## Documentation
+
+See <https://v15.vuetifyjs.com/en/components>
+
 ## Icons
 
 See https://material.io/resources/icons/?style=outline or https://www.matblazor.com/Icon

@@ -7,9 +7,9 @@ class FetchService {
     return FetchService.INSTANCE;
   }
 
-  performPost (url, data) {
+  performPostJson (url, data) {
     // POST does not work correctly with withCredentials, needs to go via "request" instead, see https://github.com/axios/axios/issues/876
-    return this.getAxios().request({url: url, method: 'post', withCredentials: true, data: data});
+    return this.getAxios().request({url: url, method: 'post', withCredentials: false, data: data, headers: {"Content-Type": "application/json"}});
   }
 
   performGet (url) {

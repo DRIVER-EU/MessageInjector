@@ -1,3 +1,3 @@
 export default {
-  UPLOAD_POPUP: "UPLOAD_POPUP",
+  GEO_JSON_POPUP: "GEO_JSON_POPUP",
 }

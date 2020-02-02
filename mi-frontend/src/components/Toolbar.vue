@@ -1,16 +1,15 @@
 <template>
-  <v-toolbar class="primary" style="height: 64px">
-    <img src="../assets/logo.png" class="project-logo">
-    <v-toolbar-title class="title">Message Inject</v-toolbar-title>
-    <v-spacer></v-spacer>
-    <slot/>
-  </v-toolbar>
+    <v-toolbar class="primary" style="height: 64px">
+        <img src="../assets/logo.png" class="project-logo">
+        <v-toolbar-title class="title">Message Inject</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <slot/>
+    </v-toolbar>
 </template>
 
 <script>
   export default {
     name: 'Toolbar',
-    props: {
-    },
-  };
+    props: {},
+  }
 </script>

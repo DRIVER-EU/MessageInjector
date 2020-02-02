@@ -6,30 +6,32 @@
   import 'ol/ol.css';
   import Map from 'ol/Map';
   import View from 'ol/View';
-  import Feature from 'ol/Feature';
   import TileLayer from 'ol/layer/Tile';
   import VectorLayer from 'ol/layer/Vector';
   import OSM from 'ol/source/OSM';
-  import TileWMS from 'ol/source/TileWMS';
   import VectorSource from 'ol/source/Vector';
   import GeoJSON from 'ol/format/GeoJSON';
-  import Circle from 'ol/geom/Circle';
-  import Point from 'ol/geom/Point';
   import Polygon from 'ol/geom/Polygon';
-  import Style from 'ol/style/Style';
-  import Icon from 'ol/style/Icon';
-  import Control from 'ol/control/Control';
   import {transformExtent} from 'ol/proj.js';
   import {mapStyling} from '../service/MapStylingService';
-  import Urls from '../constants/Urls';
   import Draw from "ol/interaction/Draw";
+  import Style from 'ol/style/Style'
+  import Stroke from 'ol/style/Stroke'
+  import Fill from 'ol/style/Fill'
 
   export default {
     name: 'MapPanel',
-    props: ['geojson'],
+    props: ['newFeatureGeoJson', 'featureGeoJsonToUpload', 'uploadedFeatureGeoJson', 'onDrawPolygon'],
     watch: {
-      geojson: function () {
+      newFeatureGeoJson: function () {
+        this.updateFeatures();
       },
+      featureGeoJsonToUpload: function() {
+        this.updateFeatures();
+      },
+      uploadedFeatureGeoJson: function() {
+        this.updateFeatures();
+      }
     },
     methods: {
       transform (extent) {
@@ -38,16 +40,29 @@
       updateFeatures () {
         this.vectorSource.clear();
         this.updateFeaturesFromGeoJson();
-        this.scaleToFeatures();
       },
       updateFeaturesFromGeoJson () {
-        if (this.geojson) {
-          const features = new GeoJSON().readFeatures(this.geojson);
-          console.log('Displaying GeoJSON features', features);
-          if (features.length > 0) {
-            features.forEach(f => f.getGeometry().transform('EPSG:4326', 'EPSG:3857'));
-            this.vectorSource.addFeatures(features);
-          }
+        if (this.newFeatureGeoJson) {
+          this.addFeaturesFromGeoJson(this.newFeatureGeoJson, mapStyling.createPolygonStyle("red", 5, "rgba(255, 255, 255, 0.3)"))
+        }
+        if (this.featureGeoJsonToUpload) {
+          const style = mapStyling.createPolygonStyle("red", 2, "rgba(255, 255, 255, 0.3)");
+          this.featureGeoJsonToUpload.forEach(geoJson => this.addFeaturesFromGeoJson(geoJson, style));
+        }
+        if (this.uploadedFeatureGeoJson) {
+          const style = mapStyling.createPolygonStyle("blue", 2, "rgba(255, 255, 255, 0.3)");
+          this.uploadedFeatureGeoJson.forEach(geoJson => this.addFeaturesFromGeoJson(geoJson, style));
+        }
+      },
+      addFeaturesFromGeoJson(geoJson, style) {
+        const features = new GeoJSON().readFeatures(geoJson);
+        console.log('Displaying GeoJSON features', features);
+        if (features.length > 0) {
+          features.forEach(f => {
+            f.getGeometry().transform('EPSG:4326', 'EPSG:3857');
+            f.setStyle(style);
+          });
+          this.vectorSource.addFeatures(features);
         }
       },
       scaleToFeatures() {
@@ -56,14 +71,27 @@
           const extent = this.vectorSource.getExtent();
           this.map.getView().fit(extent, {size: this.map.getSize(), maxZoom: 10});
         } else if (!this.wmsData) {
-          const euExtent = this.transform([-27.68862, 33.59717, 43.90757, 71.97626]);
-          this.map.getView().fit(euExtent, this.map.getSize());
+          this.scaleToEurope();
         }
       },
+      scaleToEurope() {
+        const euExtent = this.transform([-27.68862, 33.59717, 43.90757, 71.97626]);
+        this.map.getView().fit(euExtent, this.map.getSize());
+      },
       addInteractions() {
+        const me = this;
         const draw = new Draw({
-          source: this.vectorSource,
-          type: 'Polygon'
+          type: 'Polygon',
+        });
+        draw.on('drawend', function (e) {
+          const currentFeature = e.feature; // this is the feature fired the event
+          const options = {
+            featureProjection: 'EPSG:3857',
+            dataProjection: 'EPSG:4326'
+          };
+          const format = new GeoJSON(options);
+          const geoJson = format.writeFeature(currentFeature);
+          me.onDrawPolygon(geoJson);
         });
         this.map.addInteraction(draw);
       }
@@ -97,6 +125,7 @@
 
       this.addInteractions();
       this.updateFeatures();
+      this.scaleToEurope();
     },
   };
 </script>

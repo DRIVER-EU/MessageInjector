@@ -92,6 +92,18 @@ class MapStylingService {
   stylingFunction (feature) {
     return this.styles[feature.getGeometry().getType()];
   };
+
+  createPolygonStyle(strokeColor, strokeWidth, fillColor) {
+    return new Style({
+      stroke: new Stroke({
+        color: strokeColor,
+        width: strokeWidth
+      }),
+      fill: new Fill({
+        color: fillColor
+      })
+    });
+  }
 }
 
 const mapStyling = MapStylingService.getInstance();
