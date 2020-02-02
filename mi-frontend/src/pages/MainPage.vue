@@ -2,8 +2,12 @@
   <v-app>
     <toolbar>
       <v-menu offset-y content-class="dropdown-menu" transition="slide-y-transition">
-        <v-btn :disabled="!isUploadPossible" class="toolbarButton" slot="activator" @click="openGeoJsonUploadPopup">
-          <v-badge overlap :color="!isUploadPossible ? 'rgba(0,0,0,0.26)' : 'rgba(0, 0, 0, 0.87)'">
+        <v-btn class="toolbarButton" slot="activator" @click="openCapUploadPopup">
+          <v-icon left>cloud_upload</v-icon>
+          CAP Upload
+        </v-btn>
+        <v-btn :disabled="!isGeometryUploadPossible" class="toolbarButton" slot="activator" @click="openGeoJsonUploadPopup">
+          <v-badge overlap :color="!isGeometryUploadPossible ? 'rgba(0,0,0,0.26)' : 'rgba(0, 0, 0, 0.87)'">
             <template v-slot:badge>
               <span>{{numberOfPolygonsToUpload}}</span>
             </template>
@@ -38,6 +42,7 @@
       </v-snackbar>
     </main>
     <geo-json-upload-popup/>
+    <cap-upload-popup/>
   </v-app>
 </template>
 <script>
@@ -66,13 +71,16 @@
       uploadedFeatureGeoJson() {
         return store.state.uploadedPolygonGeoJson;
       },
-      isUploadPossible() {
+      isGeometryUploadPossible() {
         return store.state.polygonGeoJsonToUpload.length > 0 && !store.state.newPolygonGeoJson;
       }
     },
     methods: {
       openGeoJsonUploadPopup () {
         eventBus.$emit(EventName.GEO_JSON_POPUP, {open: true});
+      },
+      openCapUploadPopup () {
+        eventBus.$emit(EventName.CAP_POPUP, {open: true});
       },
       setDetailsWidth(width) {
         const mainFrame = this.$refs.mainFrame;

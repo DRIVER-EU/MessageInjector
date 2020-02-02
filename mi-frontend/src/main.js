@@ -17,6 +17,7 @@ import MapPanel from './components/MapPanel';
 import GeoJsonUploadPopup from './components/GeoJsonUploadPopup'
 import AddPolygonPanel from './components/AddPolygonPanel'
 import JsonTree from './components/JsonTree'
+import CapUploadPopup from './components/CapUploadPopup'
 
 export const eventBus = new Vue();
 store.eventBus = eventBus;
@@ -42,6 +43,7 @@ Vue.config.productionTip = false;
 
 Vue.component('add-polygon-panel', AddPolygonPanel);
 Vue.component('geo-json-upload-popup', GeoJsonUploadPopup);
+Vue.component('cap-upload-popup', CapUploadPopup);
 Vue.component('json-tree', JsonTree);
 Vue.component('map-panel', MapPanel);
 Vue.component('vue-load-image', VueLoadImage);

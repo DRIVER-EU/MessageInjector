@@ -73,24 +73,22 @@
           return JSON.stringify({});
         }
       },
-      create: function () {
-      },
-      edit: function (entity) {
-      },
-      delete: function (entity) {
+      reset: function() {
+        this.topicName = '';
       },
       clear: function () {
         store.dispatch('clearPolygonGeoJsonToUpload')
-        this.dialog = false;
+        this.cancel();
       },
       cancel: function () {
         this.dialog = false;
+        this.reset();
       },
       upload: function() {
         console.log("Uploading", this.featureCollectionGeoJson);
         fetchService.performPostJson('sendGeoJson?cgorName=' + this.topicName, this.featureCollectionGeoJson).then(() => {
           store.dispatch('markPolygonGeoJsonAsUploaded')
-          this.dialog = false;
+          this.cancel();
         }).catch(ex => console.log(ex));
       }
   },

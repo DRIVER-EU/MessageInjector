@@ -12,6 +12,11 @@ class FetchService {
     return this.getAxios().request({url: url, method: 'post', withCredentials: false, data: data, headers: {"Content-Type": "application/json"}});
   }
 
+  performPostXml (url, data) {
+    // POST does not work correctly with withCredentials, needs to go via "request" instead, see https://github.com/axios/axios/issues/876
+    return this.getAxios().request({url: url, method: 'post', withCredentials: false, data: data, headers: {"Content-Type": "application/xml"}});
+  }
+
   performGet (url) {
     return this.getAxios().get(url, {withCredentials: true});
   }
