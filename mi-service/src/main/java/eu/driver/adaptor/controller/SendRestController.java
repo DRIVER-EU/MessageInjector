@@ -3,8 +3,10 @@ package eu.driver.adaptor.controller;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Produces;
@@ -24,6 +26,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,8 +50,15 @@ import eu.driver.model.core.Level;
 import eu.driver.model.core.Log;
 import eu.driver.model.core.MapLayerUpdate;
 import eu.driver.model.core.UpdateType;
+import eu.driver.model.geojson.Feature;
 import eu.driver.model.geojson.FeatureCollection;
+import eu.driver.model.geojson.FeatureCollectionType;
+import eu.driver.model.geojson.FeatureType;
 import eu.driver.model.geojson.GeoJSONEnvelope;
+import eu.driver.model.geojson.MultiPolygon;
+import eu.driver.model.geojson.MultiPolygonType;
+import eu.driver.model.geojson.Polygon;
+import eu.driver.model.geojson.PolygonType;
 
 @RestController
 public class SendRestController implements
@@ -56,7 +66,7 @@ public class SendRestController implements
 
 	private Logger log = Logger.getLogger(this.getClass());
 	private XMLToAVROMapper avroMapper = new XMLToAVROMapper();
-	private CISAdapter adapter = CISAdapter.getInstance();
+	private CISAdapter adapter = null; //CISAdapter.getInstance();
 	
 	private Map<String, String> registeredTopics = new HashMap<String, String>();
 
@@ -219,17 +229,97 @@ public class SendRestController implements
 		log.info("--> sendGeoJson");
 
 		try {
-			InputStream input = new ByteArrayInputStream(requestJson.getBytes());
-			DataInputStream din = new DataInputStream(input);
-			Schema parsedSchema = FeatureCollection.SCHEMA$;
-			Decoder decoder = DecoderFactory.get().jsonDecoder(parsedSchema, din);
-		    DatumReader<GenericData.Record> reader = new GenericDatumReader(parsedSchema);
-			adapter.sendMessage(reader.read(null, decoder), cgorName);
+			JSONObject geoJson = new JSONObject(requestJson);
+			
+			FeatureCollection featureCollection = new FeatureCollection();
+			featureCollection.setType(FeatureCollectionType.FeatureCollection);
+			if (geoJson.isNull("bbox")) {
+				featureCollection.setBbox(null);
+			} else {
+				JSONArray bboxList = geoJson.getJSONArray("bbox");
+				List<Double> bboxDoubleList = new ArrayList<Double>();
+				for (int i = 0; i < bboxList.length(); i++) {
+					bboxDoubleList.add(Double.parseDouble(bboxList.getString(i)));
+				}
+				featureCollection.setBbox(bboxDoubleList);
+			}
+			
+			// features
+			JSONArray featureList = geoJson.getJSONArray("features");
+			List<Feature> listOfFeatures = new ArrayList<Feature>();
+			
+			int count = featureList.length();
+			for (int i = 0; i < count; i++) {
+				Feature listFeature = new Feature();
+				JSONObject feature = featureList.getJSONObject(i);
+				listFeature.setType(FeatureType.Feature);
+				
+				// geometry
+				JSONObject geometryObj = feature.getJSONObject("geometry");
+				if (geometryObj.getString("type").equalsIgnoreCase("Polygon")) {
+					Polygon polygon = new Polygon();
+					polygon.setType(PolygonType.Polygon);
+					List<List<List<Double>>> polygonList = new ArrayList<List<List<Double>>>();
+					List<List<Double>> coordList = new ArrayList<>();
+					
+					JSONArray coordObj = geometryObj.getJSONArray("coordinates");
+					JSONArray coordObjArray = coordObj.getJSONArray(0);
+					
+					for (int a = 0; a < coordObjArray.length(); a++) {
+						JSONArray jsonCoord = coordObjArray.getJSONArray(0);
+						List<Double> featCoord = new ArrayList<>();
+						featCoord.add(jsonCoord.getDouble(0));
+						featCoord.add(jsonCoord.getDouble(1));
+						coordList.add(featCoord);
+					}
+					polygonList.add(coordList);
+					
+					polygon.setCoordinates(polygonList);
+					
+					listFeature.setGeometry(polygon);
+				} else if (geometryObj.getString("type").equalsIgnoreCase("MultiPolygon")) {
+					MultiPolygon multiPolygon = new MultiPolygon();
+					multiPolygon.setType(MultiPolygonType.MultiPolygon);
+					List<List<List<List<Double>>>> multiPolygonList = new ArrayList<List<List<List<Double>>>>();
+					
+					List<List<List<Double>>> polygonList = new ArrayList<List<List<Double>>>();
+					List<List<Double>> coordList = new ArrayList<>();
+					
+					JSONArray coordObj = geometryObj.getJSONArray("coordinates");
+					JSONArray coordObjArray = coordObj.getJSONArray(0);
+					
+					for (int a = 0; a < coordObjArray.length(); a++) {
+						JSONArray jsonCoord = coordObjArray.getJSONArray(0);
+						List<Double> featCoord = new ArrayList<>();
+						featCoord.add(jsonCoord.getDouble(0));
+						featCoord.add(jsonCoord.getDouble(1));
+						coordList.add(featCoord);
+					}
+					polygonList.add(coordList);
+					multiPolygonList.add(polygonList);
+					
+					multiPolygon.setCoordinates(multiPolygonList);
+					
+					listFeature.setGeometry(multiPolygon);
+				}
+				
+				// properties
+				Map<CharSequence, Object> jsonProperties = new HashMap<CharSequence, Object>();
+				JSONObject jsonPop = feature.getJSONObject("properties");
+				
+				
+				listFeature.setProperties(jsonProperties);
+				listOfFeatures.add(listFeature);
+			}
+			
+			featureCollection.setFeatures(listOfFeatures);
+			
+			adapter.sendMessage(featureCollection, cgorName);
 		} catch (CommunicationException cEx) {
-			log.error("Error sending large data update message!", cEx);
+			log.error("Error sending GeoJson message!", cEx);
 			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (Exception Ex) {
-			log.error("Error sending large data update message!", Ex);
+			log.error("Error sending GeoJson message!", Ex);
 			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		

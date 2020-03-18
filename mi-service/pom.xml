@@ -127,7 +127,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.6.3</version>
+			<!-- version>2.9.10</version-->
 		</dependency>
 		<dependency>
 			<groupId>driver.eu</groupId>
@@ -148,7 +148,7 @@
 						<archive>
 							<manifest>
 								<addClasspath>true</addClasspath>
-								<mainClass>eu.driver.admin.service.AdminServiceApplication</mainClass>
+								<mainClass>eu.driver.adaptr.MIRestAdapter</mainClass>
 							</manifest>
 						</archive>
 					</configuration>
@@ -179,7 +179,7 @@
 							<overwrite>true</overwrite>
 							<resources>
 								<resource>
-									<directory>${project.parent.basedir}/admin-frontend/target/dist</directory>
+									<directory>${project.parent.basedir}/mi-frontend/target/dist</directory>
 									<includes>
 										<include>static/</include>
 										<include>index.html</include>
