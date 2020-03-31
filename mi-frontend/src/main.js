@@ -18,6 +18,11 @@ import GeoJsonUploadPopup from './components/GeoJsonUploadPopup'
 import AddPolygonPanel from './components/AddPolygonPanel'
 import JsonTree from './components/JsonTree'
 import CapUploadPopup from './components/CapUploadPopup'
+import PhaseMsgPopup from './components/PhaseMessagePopup'
+import LogMsgPopup from './components/LogMessagePopup'
+import EvalLogMsgPopup from './components/EvalLogMessagePopup'
+import RolePlayerMsgPopup from './components/RolePlayerMessagePopup'
+import SessionMsgPopup from './components/SessionMessagePopup'
 
 export const eventBus = new Vue();
 store.eventBus = eventBus;
@@ -44,6 +49,11 @@ Vue.config.productionTip = false;
 Vue.component('add-polygon-panel', AddPolygonPanel);
 Vue.component('geo-json-upload-popup', GeoJsonUploadPopup);
 Vue.component('cap-upload-popup', CapUploadPopup);
+Vue.component('phase-msg-popup', PhaseMsgPopup);
+Vue.component('log-msg-popup', LogMsgPopup);
+Vue.component('eval-log-msg-popup', EvalLogMsgPopup);
+Vue.component('role-player-msg-popup', RolePlayerMsgPopup);
+Vue.component('session-msg-popup', SessionMsgPopup);
 Vue.component('json-tree', JsonTree);
 Vue.component('map-panel', MapPanel);
 Vue.component('vue-load-image', VueLoadImage);

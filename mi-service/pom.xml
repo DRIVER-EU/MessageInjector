@@ -36,7 +36,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<testbed.adaptor.version>2.0.0</testbed.adaptor.version>
+		<testbed.adaptor.version>2.0.3</testbed.adaptor.version>
 		<maven.shade.version>3.1.0</maven.shade.version>
 		<springfox.version>2.8.0</springfox.version>
 		<maven.compiler.version>3.7.0</maven.compiler.version>
@@ -148,7 +148,7 @@
 						<archive>
 							<manifest>
 								<addClasspath>true</addClasspath>
-								<mainClass>eu.driver.adaptr.MIRestAdapter</mainClass>
+								<mainClass>eu.driver.adaptor.MIRestAdapter</mainClass>
 							</manifest>
 						</archive>
 					</configuration>

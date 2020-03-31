@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.driver.adapter.core.CISAdapter;
-import eu.driver.model.core.State;
+import eu.driver.model.sim.config.TimeState;
 
 
 @RestController
@@ -64,7 +64,7 @@ public class TimingController implements ResourceProcessor<RepositoryLinksResour
 	public ResponseEntity<String> getState() {
 		log.info("--> getTrialTime");
 		
-		State state = CISAdapter.getInstance().getState();
+		TimeState state = CISAdapter.getInstance().getState();
 		
 		log.info("getTrialTime -->");
 		return new ResponseEntity<String>(state.toString(), HttpStatus.OK);

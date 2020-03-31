@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +40,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import eu.driver.adapter.constants.TopicConstants;
 import eu.driver.adapter.core.CISAdapter;
 import eu.driver.adapter.excpetion.CommunicationException;
 import eu.driver.adaptor.callback.AdapterCallback;
@@ -49,6 +51,9 @@ import eu.driver.model.core.LayerType;
 import eu.driver.model.core.Level;
 import eu.driver.model.core.Log;
 import eu.driver.model.core.MapLayerUpdate;
+import eu.driver.model.core.PhaseMessage;
+import eu.driver.model.core.RequestChangeOfTrialStage;
+import eu.driver.model.core.RolePlayerMessage;
 import eu.driver.model.core.UpdateType;
 import eu.driver.model.geojson.Feature;
 import eu.driver.model.geojson.FeatureCollection;
@@ -59,6 +64,10 @@ import eu.driver.model.geojson.MultiPolygon;
 import eu.driver.model.geojson.MultiPolygonType;
 import eu.driver.model.geojson.Polygon;
 import eu.driver.model.geojson.PolygonType;
+import eu.driver.model.sim.config.SessionManagement;
+import eu.driver.model.sim.config.SessionState;
+import eu.driver.model.tm.Phase;
+import eu.driver.model.tm.Type;
 
 @RestController
 public class SendRestController implements
@@ -214,6 +223,137 @@ public class SendRestController implements
 		return new ResponseEntity<Boolean>(send, HttpStatus.OK);
 	}
 	
+	@ApiOperation(value = "sendPhaseMessage", nickname = "sendPhaseMessage")
+	@RequestMapping(value = "/MIRestAdaptor/sendPhaseMessage", method = RequestMethod.POST)
+	@ApiImplicitParams({
+		@ApiImplicitParam(name = "msgBody", value = "the message as string", required = true, dataType = "string", paramType = "body") })
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
+			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
+			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
+	public ResponseEntity<Boolean> sendPhaseMessage(@RequestBody String msgBody) {
+		log.info("--> sendPhaseMessage");
+		
+		try {
+			JSONObject msgJson = new JSONObject(msgBody);
+			
+			PhaseMessage msg = new PhaseMessage();
+			msg.setId(msgJson.getString("phaseId"));
+			msg.setPhase(Phase.valueOf(msgJson.getString("phase")));
+			msg.setIsStarting(msgJson.getBoolean("isStarting"));
+			msg.setAlternativeName(msgJson.getString("altName"));
+			
+			this.adapter.sendMessage(msg, TopicConstants.PHASE_MESSAGE_TOPIC);
+		} catch (Exception e) {
+			log.error("Error sending the PhaseMessage!", e);
+			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		log.info("sendPhaseMessage -->");
+		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+	}
+	
+	@ApiOperation(value = "sendRolePlayerMessage", nickname = "sendRolePlayerMessage")
+	@RequestMapping(value = "/MIRestAdaptor/sendRolePlayerMessage", method = RequestMethod.POST)
+	@ApiImplicitParams({
+		@ApiImplicitParam(name = "msgBody", value = "the message as string", required = true, dataType = "string", paramType = "body") })
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
+			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
+			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
+	public ResponseEntity<Boolean> sendRolePlayerMessage(@RequestBody String msgBody) {
+		log.info("--> sendRolePlayerMessage");
+		
+		try {
+			JSONObject msgJson = new JSONObject(msgBody);
+			
+			RolePlayerMessage msg = new RolePlayerMessage();
+			msg.setId(msgJson.getString("msgId"));
+			msg.setType(Type.valueOf(msgJson.getString("type")));
+			msg.setTitle(msgJson.getString("title"));
+			msg.setHeadline(msgJson.getString("headline"));
+			msg.setDescription(msgJson.getString("description"));
+			msg.setRolePlayerName(msgJson.getString("rolePlayerName"));
+			//msg.setParticipantNames(msgJson.getString(name));
+			msg.setComment(msgJson.getString("comment"));
+
+			
+			this.adapter.sendMessage(msg, TopicConstants.ROLE_PLAYER_TOPIC);
+		} catch (Exception e) {
+			log.error("Error sending the RolePlayerMessage!", e);
+			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		log.info("sendRolePlayerMessage -->");
+		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+	}
+	
+	@ApiOperation(value = "sendSessionMessage", nickname = "sendSessionMessage")
+	@RequestMapping(value = "/MIRestAdaptor/sendSessionMessage", method = RequestMethod.POST)
+	@ApiImplicitParams({
+		@ApiImplicitParam(name = "msgBody", value = "the message as string", required = true, dataType = "string", paramType = "body") })
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
+			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
+			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
+	public ResponseEntity<Boolean> sendSessionMessage(@RequestBody String msgBody) {
+		log.info("--> sendSessionMessage");
+		
+		try {
+			JSONObject msgJson = new JSONObject(msgBody);
+			
+			SessionManagement msg = new SessionManagement();
+			msg.setId(msgJson.getString("sessionId"));
+			msg.setName(msgJson.getString("sessionName"));
+			msg.setState(SessionState.valueOf(msgJson.getString("state")));
+			Map<CharSequence, CharSequence> tags = new HashMap<CharSequence, CharSequence>();
+			tags.put("trialId", msgJson.getString("trialId"));
+			tags.put("trialName", msgJson.getString("trialName"));
+			tags.put("scenarioId", msgJson.getString("scenarioId"));
+			tags.put("scenarioName", msgJson.getString("scenarioName"));
+			
+			msg.setTags(tags);
+			
+			
+			this.adapter.sendMessage(msg, TopicConstants.SESSION_MGMT_TOPIC);
+		} catch (Exception e) {
+			log.error("Error sending the SessionMessage!", e);
+			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		log.info("sendSessionMessage -->");
+		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+	}
+	
+	@ApiOperation(value = "sendOstStageChangeMessage", nickname = "sendOstStageChangeMessage")
+	@RequestMapping(value = "/MIRestAdaptor/sendOstStageChangeMessage", method = RequestMethod.POST)
+	@ApiImplicitParams({
+		@ApiImplicitParam(name = "msgBody", value = "the message as string", required = true, dataType = "string", paramType = "body") })
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
+			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
+			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
+	public ResponseEntity<Boolean> sendOstStageChangeMessage(@RequestBody String msgBody) {
+		log.info("--> sendOstStageChangeMessage");
+		
+		try {
+			JSONObject msgJson = new JSONObject(msgBody);
+			
+			RequestChangeOfTrialStage msg = new RequestChangeOfTrialStage();
+			msg.setOstTrialId(Integer.parseInt(msgJson.getString("trialId")));
+			msg.setOstTrialSessionId(Integer.parseInt(msgJson.getString("sessionId")));
+			msg.setOstTrialStageId(Integer.parseInt(msgJson.getString("stageId")));
+			
+			this.adapter.sendMessage(msg, TopicConstants.TRIAL_STATE_CHANGE_TOPIC);
+		} catch (Exception e) {
+			log.error("Error sending the OST Stage Change Message!", e);
+			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		log.info("sendOstStageChangeMessage -->");
+		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+	}
+	
 	@ApiOperation(value = "sendGeoJson", nickname = "sendGeoJson")
 	@RequestMapping(value = "/MIRestAdaptor/sendGeoJson", method = RequestMethod.POST)
 	@ApiImplicitParams({
@@ -306,7 +446,12 @@ public class SendRestController implements
 				// properties
 				Map<CharSequence, Object> jsonProperties = new HashMap<CharSequence, Object>();
 				JSONObject jsonPop = feature.getJSONObject("properties");
-				
+				Iterator<String> keys = jsonPop.keys();
+
+				while(keys.hasNext()) {
+				    String key = keys.next();
+				    jsonProperties.put(key, jsonPop.get(key));
+				}
 				
 				listFeature.setProperties(jsonProperties);
 				listOfFeatures.add(listFeature);
@@ -327,179 +472,6 @@ public class SendRestController implements
 		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
 	}
 	
-	@ApiOperation(value = "sendNamedGeoJson", nickname = "sendNamedGeoJson")
-	@RequestMapping(value = "/MIRestAdaptor/sendNamedGeoJson", method = RequestMethod.POST)
-	@ApiImplicitParams({
-		@ApiImplicitParam(name = "cgorName", value = "name of the cgor, if not provided, default public distribution group is used", required = false, dataType = "string", paramType = "query"),
-		@ApiImplicitParam(name = "requestJson", value = "the XML message as string", required = true, dataType = "string", paramType = "body") })
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
-			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
-			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
-	@Produces({ "application/json" })
-	public ResponseEntity<Boolean> sendNamedGeoJson(@QueryParam("cgorName") String cgorName, @RequestBody String requestJson ) {
-		System.out.println(requestJson);
-		log.info("--> sendNamedGeoJson");
-
-		try {
-			InputStream input = new ByteArrayInputStream(requestJson.getBytes());
-			DataInputStream din = new DataInputStream(input);
-			Schema parsedSchema = GeoJSONEnvelope.SCHEMA$;
-			Decoder decoder = DecoderFactory.get().jsonDecoder(parsedSchema, din);
-		    DatumReader<GenericData.Record> reader = new GenericDatumReader(parsedSchema);
-			adapter.sendMessage(reader.read(null, decoder), cgorName);
-		} catch (CommunicationException cEx) {
-			log.error("Error sending large data update message!", cEx);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		} catch (Exception Ex) {
-			log.error("Error sending large data update message!", Ex);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		log.info("sendNamedGeoJson -->");
-		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
-	}
-	
-	@ApiOperation(value = "sendPhotoGeoJson", nickname = "sendPhotoGeoJson")
-	@RequestMapping(value = "/MIRestAdaptor/sendPhotoGeoJson", method = RequestMethod.POST)
-	@ApiImplicitParams({
-		@ApiImplicitParam(name = "cgorName", value = "name of the cgor, if not provided, default public distribution group is used", required = false, dataType = "string", paramType = "query"),
-		@ApiImplicitParam(name = "requestJson", value = "the XML message as string", required = true, dataType = "string", paramType = "body") })
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
-			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
-			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
-	@Produces({ "application/json" })
-	public ResponseEntity<Boolean> sendPhotoGeoJson(@QueryParam("cgorName") String cgorName, @RequestBody String requestJson ) {
-		System.out.println(requestJson);
-		log.info("--> sendPhotoGeoJson");
-
-		try {
-			InputStream input = new ByteArrayInputStream(requestJson.getBytes());
-			DataInputStream din = new DataInputStream(input);
-			Schema parsedSchema = eu.driver.model.geojson.photo.FeatureCollection.SCHEMA$;
-			Decoder decoder = DecoderFactory.get().jsonDecoder(parsedSchema, din);
-		    DatumReader<GenericData.Record> reader = new GenericDatumReader(parsedSchema);
-			adapter.sendMessage(reader.read(null, decoder), cgorName);
-		} catch (CommunicationException cEx) {
-			log.error("Error sending large data update message!", cEx);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		} catch (Exception Ex) {
-			log.error("Error sending large data update message!", Ex);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		log.info("sendPhotoGeoJson -->");
-		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
-	}
-	
-
-	@ApiOperation(value = "sendLargeDataUpdate", nickname = "sendLargeDataUpdate")
-	@RequestMapping(value = "/MIRestAdaptor/sendLargeDataUpdate", method = RequestMethod.POST)
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "url", value = "the path where the data can be downloaded", required = true, dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "dataType", value = "the data type of the data", required = true, dataType = "string", paramType = "query", allowableValues = "msword, ogg, pdf, excel, powerpoint, zip, audio_mpeg, audio_vorbis, image_bmp, image_gif, image_geotiff, image_jpeg, image_png, json, geojson, text_plain, video_mpeg, video_msvideo, video_avi, other"),
-			@ApiImplicitParam(name = "title", value = "the title of the update message", required = true, dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "description", value = "The description of the update message", required = false, dataType = "string", paramType = "body") })
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
-			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
-			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
-	@Produces({ "application/json" })
-	public ResponseEntity<Boolean> sendLargeDataUpdate(	@QueryParam("url") String url,
-														@QueryParam("dataType") String dataType,
-														@QueryParam("title") String title,
-														@RequestBody String description) {
-		log.info("--> sendLargeDataUpdate");
-
-		try {
-			LargeDataUpdate largeData = new LargeDataUpdate();
-			largeData.setUrl(url);
-			largeData.setDataType(DataType.valueOf(dataType));
-			largeData.setTitle(title);
-			largeData.setDescription(description);
-			
-			adapter.sendMessage(largeData);
-		} catch (CommunicationException cEx) {
-			log.error("Error sending large data update message!", cEx);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		log.info("sendLargeDataUpdate -->");
-		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
-	}
-	
-	@ApiOperation(value = "sendLargeDataUpdateJson", nickname = "sendLargeDataUpdateJson")
-	@RequestMapping(value = "/MIRestAdaptor/sendLargeDataUpdateJson", method = RequestMethod.POST)
-	@Produces({ "application/json" })
-	public ResponseEntity<Boolean> sendLargeDataUpdateJson( @RequestBody String requestJson ) {
-		System.out.println(requestJson);
-		log.info("--> sendLargeDataUpdateJson");
-
-		try {
-			JSONObject json = new JSONObject(requestJson);
-			LargeDataUpdate largeData = new LargeDataUpdate();
-			largeData.setUrl(json.getString("url"));
-			largeData.setDataType(DataType.valueOf(json.getString("dataType")));
-			largeData.setTitle(json.getString("title"));
-			largeData.setDescription(json.getString("description"));
-			
-			adapter.sendMessage(largeData);
-		} catch (CommunicationException cEx) {
-			log.error("Error sending large data update message!", cEx);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		} catch (Exception Ex) {
-			log.error("Error sending large data update message!", Ex);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		log.info("sendLargeDataUpdateJson -->");
-		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
-	}
-	
-	@ApiOperation(value = "sendMapLayerUpdate", nickname = "sendMapLayerUpdate")
-	@RequestMapping(value = "/MIRestAdaptor/sendMapLayerUpdate", method = RequestMethod.POST)
-	@ApiImplicitParams({
-			@ApiImplicitParam(name = "url", value = "the path where the data can be downloaded", required = true, dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "title", value = "the title of the update message", required = true, dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "layerType", value = "the type of the layer", required = true, dataType = "string", paramType = "query", allowableValues = "WMS, WMTS, WCS, WFS, OTHER"),
-			@ApiImplicitParam(name = "updateType", value = "the type of update", required = true, dataType = "string", paramType = "query", allowableValues = "CREATE, UPDATE, DELETE"),
-			@ApiImplicitParam(name = "username", value = "the username for getting the data", required = false, dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "password", value = "the password for getting the data", required = false, dataType = "string", paramType = "query"),
-			@ApiImplicitParam(name = "description", value = "The description of the update message", required = false, dataType = "string", paramType = "body") })
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Success", response = Boolean.class),
-			@ApiResponse(code = 400, message = "Bad Request", response = Boolean.class),
-			@ApiResponse(code = 500, message = "Failure", response = Boolean.class) })
-	@Produces({ "application/json" })
-	public ResponseEntity<Boolean> sendMapLayerUpdate(	@QueryParam("url") String url,
-														@QueryParam("title") String title,
-														@QueryParam("layerType") String layerType,
-														@QueryParam("updateType") String updateType,
-														@QueryParam("username") String username,
-														@QueryParam("password") String password,
-														@RequestBody String description) {
-		log.info("--> sendMapLayerUpdate");
-
-		try {
-			MapLayerUpdate layerUpdate = new MapLayerUpdate();
-			layerUpdate.setUrl(url);
-			layerUpdate.setTitle(title);
-			layerUpdate.setLayerType(LayerType.valueOf(layerType));
-			layerUpdate.setUpdateType(UpdateType.valueOf(updateType));
-			layerUpdate.setUsername(username);
-			layerUpdate.setPassword(password);
-			layerUpdate.setDescription(description);
-			
-			adapter.sendMessage(layerUpdate);
-		} catch (CommunicationException cEx) {
-			log.error("Error sending map layer update message!", cEx);
-			return new ResponseEntity<Boolean>(false, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		log.info("sendMapLayerUpdate -->");
-		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
-	}
 	
 	@ApiOperation(value = "subscribeOnTopic", nickname = "subscribeOnTopic")
 	@RequestMapping(value = "/MIRestAdaptor/subscribeOnTopic", method = RequestMethod.POST)
@@ -520,5 +492,7 @@ public class SendRestController implements
 		log.info("subscribeOnTopic -->");
 		return new ResponseEntity<Boolean>(true, HttpStatus.OK);
 	}
+	
+	
 
 }
