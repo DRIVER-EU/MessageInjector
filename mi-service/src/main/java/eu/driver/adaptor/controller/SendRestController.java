@@ -75,7 +75,7 @@ public class SendRestController implements
 
 	private Logger log = Logger.getLogger(this.getClass());
 	private XMLToAVROMapper avroMapper = new XMLToAVROMapper();
-	private CISAdapter adapter = null; //CISAdapter.getInstance();
+	private CISAdapter adapter = CISAdapter.getInstance();
 	
 	private Map<String, String> registeredTopics = new HashMap<String, String>();
 
